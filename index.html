@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Guess The Number</title>
+
+<style>
+body{
+    margin:0;
+    font-family:Arial,sans-serif;
+    background:linear-gradient(135deg,#4facfe,#00f2fe);
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    height:100vh;
+}
+
+.box{
+    background:#fff;
+    padding:30px;
+    border-radius:15px;
+    text-align:center;
+    width:320px;
+    box-shadow:0 10px 25px rgba(0,0,0,.2);
+}
+
+h2{
+    margin-top:0;
+}
+
+input{
+    width:80%;
+    padding:10px;
+    font-size:18px;
+    margin-top:10px;
+}
+
+button{
+    margin-top:15px;
+    padding:10px 20px;
+    font-size:18px;
+    border:none;
+    border-radius:8px;
+    background:#2196f3;
+    color:white;
+    cursor:pointer;
+}
+
+button:hover{
+    background:#1976d2;
+}
+
+#result{
+    margin-top:20px;
+    font-size:20px;
+    font-weight:bold;
+}
+
+#score{
+    margin-top:10px;
+}
+</style>
+</head>
+<body>
+
+<div class="box">
+<h2>🎯 Guess The Number</h2>
+<p>Guess a number between <b>1 - 10</b></p>
+
+<input type="number" id="guess" min="1" max="10">
+
+<br>
+
+<button onclick="check()">Guess</button>
+
+<p id="result"></p>
+<p id="score">Score : 10</p>
+
+</div>
+
+<script>
+
+let number=Math.floor(Math.random()*10)+1;
+let score=10;
+
+function check(){
+
+let user=Number(document.getElementById("guess").value);
+
+if(user===number){
+document.getElementById("result").innerHTML="🎉 Correct!";
+document.getElementById("result").style.color="green";
+}
+else{
+
+score--;
+
+if(score<=0){
+document.getElementById("result").innerHTML="💀 Game Over! Number was "+number;
+document.getElementById("score").innerHTML="Score : 0";
+return;
+}
+
+if(user<number){
+document.getElementById("result").innerHTML="📉 Too Low!";
+}
+else{
+document.getElementById("result").innerHTML="📈 Too High!";
+}
+
+document.getElementById("score").innerHTML="Score : "+score;
+
+}
+
+}
+
+</script>
+
+</body>
+</html>
