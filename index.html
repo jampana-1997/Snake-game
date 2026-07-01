@@ -164,7 +164,9 @@ score=0;
 document.getElementById("score").innerText=score;
 
 placeItems();
+
 draw();
+
 clearInterval(timer);
 
 timer=setInterval(update,gameSpeed);
@@ -335,22 +337,16 @@ ctx.fill();
 
 snake.forEach((p,i)=>{
 
-ctx.fillStyle=i==0?"lime":"green";
+    ctx.fillStyle = (i==0) ? "lime" : "green";
 
-ctx.fillRect(
-
-p.x*size,
-
-p.y*size,
-
-19,
-
-19
-
-);
+    ctx.fillRect(
+        p.x * size,
+        p.y * size,
+        size,
+        size
+    );
 
 });
-
 }
 
 function gameOver(){
