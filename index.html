@@ -1,277 +1,316 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Student Placement Dashboard</title>
-
-<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Snake Bomb Game</title>
 
 <style>
 body{
-font-family:Arial,sans-serif;
 margin:0;
-background:#f5f7fa;
-}
-
-.header{
-background:#0f172a;
-color:white;
-padding:15px;
-text-align:center;
-font-size:28px;
-font-weight:bold;
-}
-
-.filters{
+background:#111;
 display:flex;
-flex-wrap:wrap;
-gap:10px;
-padding:15px;
-background:white;
-box-shadow:0 2px 5px rgba(0,0,0,.1);
+justify-content:center;
+align-items:center;
+height:100vh;
+font-family:Arial;
+color:#fff;
 }
 
-select,input{
-padding:8px;
-border:1px solid #ccc;
-border-radius:5px;
-}
-
-.cards{
-display:grid;
-grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
-gap:15px;
-padding:15px;
-}
-
-.card{
-background:white;
-padding:20px;
-border-radius:10px;
+#game{
 text-align:center;
-box-shadow:0 2px 5px rgba(0,0,0,.1);
 }
 
-.card h2{
-margin:0;
-color:#2563eb;
+canvas{
+background:#222;
+border:4px solid lime;
 }
 
-table{
-width:100%;
-border-collapse:collapse;
-background:white;
-}
-
-th{
-background:#2563eb;
-color:white;
-padding:10px;
-}
-
-td{
-padding:8px;
-border:1px solid #ddd;
-}
-
-.container{
-padding:15px;
-overflow:auto;
+button{
+padding:10px 20px;
+font-size:18px;
+margin-top:10px;
+cursor:pointer;
 }
 </style>
 </head>
 
 <body>
 
-<div class="header">
-Student Placement Dashboard
-</div>
+<div id="game">
 
-<div class="cards">
-<div class="card">
-<h2 id="totalStudents">0</h2>
-<p>Total Students</p>
-</div>
+<h2>
+Score :
+<span id="score">0</span>
+</h2>
 
-<div class="card">
-<h2 id="placedStudents">0</h2>
-<p>Placed Students</p>
-</div>
+<h3>
+High Score :
+<span id="high">0</span>
+</h3>
 
-<div class="card">
-<h2 id="companies">0</h2>
-<p>Companies</p>
-</div>
+<canvas id="canvas" width="400" height="400"></canvas>
 
-<div class="card">
-<h2 id="highestPackage">0</h2>
-<p>Highest Package</p>
-</div>
-</div>
+<br>
 
-<div class="filters">
-<input type="text" id="search" placeholder="Search Student">
+<button onclick="restart()">Restart</button>
 
-<select id="branchFilter">
-<option value="">All Branches</option>
-</select>
-
-<select id="companyFilter">
-<option value="">All Companies</option>
-</select>
-
-<select id="batchFilter">
-<option value="">All Batches</option>
-</select>
-</div>
-
-<div class="container">
-<table id="dataTable">
-<thead></thead>
-<tbody></tbody>
-</table>
 </div>
 
 <script>
 
-const csvUrl =
-"https://docs.google.com/spreadsheets/d/1wB72mFM70AToOAfPmAJepm9IR8HH0lV4M2sVsap3ZnM/export?format=csv";
+const canvas=document.getElementById("canvas");
+const ctx=canvas.getContext("2d");
 
-let allData=[];
+const size=20;
+const cells=20;
 
-Papa.parse(csvUrl,{
-download:true,
-header:true,
-complete:function(results){
+let snake;
+let food;
+let bomb;
+let dx;
+let dy;
+let score;
+let timer;
 
-allData=results.data;
+let high=Number(localStorage.getItem("snakeHigh"))||0;
+document.getElementById("high").innerText=high;
 
-createFilters();
-renderTable(allData);
-updateCards(allData);
+function randomPos(){
 
-}
-});
+return{
 
-function createFilters(){
+x:Math.floor(Math.random()*cells),
 
-let branches=[...new Set(allData.map(x=>x.Branch))];
-let companies=[...new Set(allData.map(x=>x.Company))];
-let batches=[...new Set(allData.map(x=>x.Batch))];
+y:Math.floor(Math.random()*cells)
 
-branches.forEach(v=>{
-if(v){
-branchFilter.innerHTML+=`<option>${v}</option>`;
-}
-});
-
-companies.forEach(v=>{
-if(v){
-companyFilter.innerHTML+=`<option>${v}</option>`;
-}
-});
-
-batches.forEach(v=>{
-if(v){
-batchFilter.innerHTML+=`<option>${v}</option>`;
-}
-});
+};
 
 }
 
-function renderTable(data){
+function placeItems(){
 
-if(data.length==0) return;
+food=randomPos();
 
-let headers=Object.keys(data[0]);
+bomb=randomPos();
 
-let thead="<tr>";
+while(
+(food.x==bomb.x && food.y==bomb.y)
+){
 
-headers.forEach(h=>{
-thead+=`<th>${h}</th>`;
-});
+bomb=randomPos();
 
-thead+="</tr>";
-
-document.querySelector("#dataTable thead").innerHTML=thead;
-
-let rows="";
-
-data.forEach(row=>{
-
-rows+="<tr>";
-
-headers.forEach(h=>{
-rows+=`<td>${row[h]||''}</td>`;
-});
-
-rows+="</tr>";
-
-});
-
-document.querySelector("#dataTable tbody").innerHTML=rows;
 }
 
-function updateCards(data){
+}
 
-document.getElementById("totalStudents").innerText=data.length;
+function restart(){
 
-document.getElementById("placedStudents").innerText=data.filter(
-x=>x.Company && x.Company!=""
-).length;
+snake=[
 
-let companies=[...new Set(data.map(x=>x.Company).filter(Boolean))];
+{x:10,y:10}
 
-document.getElementById("companies").innerText=companies.length;
+];
 
-let maxPackage=Math.max(
-...data.map(x=>parseFloat(x["Salary package"])||0)
+dx=1;
+dy=0;
+
+score=0;
+
+document.getElementById("score").innerText=0;
+
+placeItems();
+
+clearInterval(timer);
+
+timer=setInterval(update,120);
+
+}
+
+document.addEventListener("keydown",e=>{
+
+if(e.key=="ArrowUp" && dy!=1){
+
+dx=0;
+dy=-1;
+
+}
+
+if(e.key=="ArrowDown" && dy!=-1){
+
+dx=0;
+dy=1;
+
+}
+
+if(e.key=="ArrowLeft" && dx!=1){
+
+dx=-1;
+dy=0;
+
+}
+
+if(e.key=="ArrowRight" && dx!=-1){
+
+dx=1;
+dy=0;
+
+}
+
+});
+
+function update(){
+
+let head={
+
+x:snake[0].x+dx,
+
+y:snake[0].y+dy
+
+};
+
+if(
+
+head.x<0||
+
+head.y<0||
+
+head.x>=cells||
+
+head.y>=cells
+
+){
+
+gameOver();
+
+return;
+
+}
+
+for(let s of snake){
+
+if(head.x==s.x && head.y==s.y){
+
+gameOver();
+
+return;
+
+}
+
+}
+
+if(head.x==bomb.x && head.y==bomb.y){
+
+gameOver();
+
+return;
+
+}
+
+snake.unshift(head);
+
+if(head.x==food.x && head.y==food.y){
+
+score++;
+
+document.getElementById("score").innerText=score;
+
+if(score>high){
+
+high=score;
+
+localStorage.setItem("snakeHigh",high);
+
+document.getElementById("high").innerText=high;
+
+}
+
+placeItems();
+
+}else{
+
+snake.pop();
+
+}
+
+draw();
+
+}
+
+function draw(){
+
+ctx.fillStyle="#222";
+ctx.fillRect(0,0,400,400);
+
+ctx.fillStyle="red";
+
+ctx.beginPath();
+
+ctx.arc(
+
+food.x*size+10,
+
+food.y*size+10,
+
+8,
+
+0,
+
+Math.PI*2
+
 );
 
-document.getElementById("highestPackage").innerText=maxPackage;
-}
+ctx.fill();
 
-function applyFilters(){
+ctx.fillStyle="orange";
 
-let search=document.getElementById("search").value.toLowerCase();
+ctx.beginPath();
 
-let branch=document.getElementById("branchFilter").value;
+ctx.arc(
 
-let company=document.getElementById("companyFilter").value;
+bomb.x*size+10,
 
-let batch=document.getElementById("batchFilter").value;
+bomb.y*size+10,
 
-let filtered=allData.filter(row=>{
+8,
 
-let matchSearch=
-JSON.stringify(row).toLowerCase().includes(search);
+0,
 
-let matchBranch=
-!branch || row.Branch==branch;
+Math.PI*2
 
-let matchCompany=
-!company || row.Company==company;
+);
 
-let matchBatch=
-!batch || row.Batch==batch;
+ctx.fill();
 
-return matchSearch &&
-matchBranch &&
-matchCompany &&
-matchBatch;
+snake.forEach((p,i)=>{
+
+ctx.fillStyle=i==0?"lime":"green";
+
+ctx.fillRect(
+
+p.x*size,
+
+p.y*size,
+
+19,
+
+19
+
+);
 
 });
 
-renderTable(filtered);
-updateCards(filtered);
+}
+
+function gameOver(){
+
+clearInterval(timer);
+
+alert("💀 Game Over\nScore : "+score);
 
 }
 
-search.addEventListener("input",applyFilters);
-branchFilter.addEventListener("change",applyFilters);
-companyFilter.addEventListener("change",applyFilters);
-batchFilter.addEventListener("change",applyFilters);
+restart();
 
 </script>
 
